@@ -63,7 +63,8 @@ class Menu {
         profileObj.createStudentProfile(this.loggedUser);
         this.showMenu();
       case 8:
-        profileObj.getProfile(this.loggedUser);
+        String currentProfile = profileObj.getProfile(this.loggedUser);
+        System.out.println("\n"+currentProfile);
         this.showMenu();
       case 0:
         break;
@@ -88,7 +89,7 @@ class Position {
 
       System.out.println("\nWelcome to the position form! \n");
 
-      File file = new File("database.txt");
+      File file = new File("positions.txt");
       file.createNewFile();
 
       Scanner fileScan = new Scanner(file);
@@ -130,28 +131,32 @@ class Position {
   public void list() {
 
     try {
-      System.out.println("\nAll available positions!");
+      File file = new File("positions.txt");
 
-      File file = new File("database.txt");
-      Scanner fileScan = new Scanner(file);
+      if (!file.exists()) {
+        System.out.println("\nNo positions available!");  
+      } else {
+        System.out.println("\nAll available positions!");
+        Scanner fileScan = new Scanner(file);
 
-      while(fileScan.hasNextLine()) {
+        while(fileScan.hasNextLine()) {
 
-        String line   = fileScan.nextLine();
-        String[] data = line.split(",");
+          String line   = fileScan.nextLine();
+          String[] data = line.split(",");
 
-        System.out.println("\nPosition number " + data[0] + "\n");
+          System.out.println("\nPosition number " + data[0] + "\n");
 
-        data = Arrays.copyOfRange(data, 1, data.length);
+          data = Arrays.copyOfRange(data, 1, data.length);
 
-        for(String one: data) {
-          System.out.println(one);
+          for(String one: data) {
+            System.out.println(one);
+          }
         }
+
+        fileScan.close();
       }
 
       System.out.print("\n");
-
-      fileScan.close();
 
     } catch (IOException e) {
       System.out.println("An error occurred.");
@@ -160,8 +165,8 @@ class Position {
   }
 
   public void delete() {
-    File file        = new File("database.txt");
-    File tempFile    = new File("tempDatabase.txt");
+    File file        = new File("positions.txt");
+    File tempFile    = new File("temppositions.txt");
 
     try {
       System.out.println("\nDelete a position!\n");
@@ -180,9 +185,6 @@ class Position {
 
         String line              = fileScan.nextLine();
         String currentPositionId = line.split(",")[0];
-
-        System.out.println(currentPositionId);
-        System.out.println(idToDelete);
 
         if (currentPositionId.equals(idToDelete)) {
           deleted = true;
@@ -223,7 +225,7 @@ class Position {
         System.out.print("Please Provide the position number: ");
         String positionNumber = scanner.nextLine();
       
-        File file = new File("database.txt");
+        File file = new File("positions.txt");
         Scanner fileScan = new Scanner(file);
 
         String correspondingPosition = "";
@@ -264,34 +266,42 @@ class UserClass {
   String loggedUser;
 
   static String login() {
-    Scanner enter = new Scanner(System.in);
-    System.out.print("Enter your username: ");
-    String username = enter.nextLine();
 
-    System.out.print("Enter your ID number: ");
-    int ID_Number = enter.nextInt();
+    File myObj = new File("Users.txt");
 
-    try {
-      File myObj = new File("Users.txt");
-      Scanner myReader = new Scanner(myObj);
+    if (!myObj.exists()) {
+      System.out.print("\nSignup first to login!");  
+    } else {
 
-      while (myReader.hasNextLine()) {
-        String data = myReader.nextLine();
-        String[] parts = data.split(",");
+      Scanner enter = new Scanner(System.in);
+      System.out.print("Enter your username: ");
+      String username = enter.nextLine();
 
-        if (parts[0].equals(username)) {
-          System.out.println("\nLogin successful");
-          myReader.close();
-          return parts[0];
+      System.out.print("Enter your ID number: ");
+      int ID_Number = enter.nextInt();
+
+      try {
+        Scanner myReader = new Scanner(myObj);
+
+        while (myReader.hasNextLine()) {
+          String data = myReader.nextLine();
+          String[] parts = data.split(",");
+
+          if (parts[0].equals(username)) {
+            System.out.println("\nLogin successful");
+            myReader.close();
+            return parts[0];
+          }
         }
+        myReader.close();
+        System.out.println("\nInvalid username or ID number");
+        return "";
+      } catch (FileNotFoundException e) {
+        System.out.println("An error occurred.");
+        e.printStackTrace();
       }
-      myReader.close();
-      System.out.println("\nInvalid username or ID number");
-      return "";
-    } catch (FileNotFoundException e) {
-      System.out.println("An error occurred.");
-      e.printStackTrace();
     }
+
     return "";
   }
 
@@ -327,6 +337,28 @@ class Profile {
     if (loggedUser == null || loggedUser == "") {
       System.out.println("\nLogin to create a profile");  
     } else {
+
+      File myObj = new File("profiles.txt");
+
+      if (myObj.exists()) {
+        try {
+          Scanner myReader = new Scanner(myObj);
+          while (myReader.hasNextLine()) {
+            String data    = myReader.nextLine();
+            String[] parts = data.split(",");
+
+            if (parts[0].equals(loggedUser)) {
+              System.out.println("\nYou already have a profile in the system!");
+              return;
+            }
+          }
+          myReader.close();
+        } catch (FileNotFoundException e) {
+          System.out.println("An error occurred.");
+          e.printStackTrace();
+        }
+      }
+
       Scanner scanner = new Scanner(System.in);
       System.out.println("\nEnter the student profile details:\n");
 
@@ -360,7 +392,7 @@ class Profile {
         FileWriter myWriter = new FileWriter("profiles.txt", true);
         myWriter.write(profile);
         myWriter.close();
-        System.out.println("profile created");
+        System.out.println("\nprofile created successfully\n");
       } catch (IOException e) {
         System.out.println("An error occurred.");
         e.printStackTrace();
@@ -369,22 +401,32 @@ class Profile {
   }
 
   static String getProfile(String loggedUser) {
-    try {
-      File myObj = new File("profiles.txt");
-      Scanner myReader = new Scanner(myObj);
-      while (myReader.hasNextLine()) {
-        String data    = myReader.nextLine();
-        String[] parts = data.split(",");
+    File myObj = new File("profiles.txt");
 
-        if (parts[0].equals(loggedUser)) {
-          System.out.println(parts[0]);
-          return data;
+    if (loggedUser == null || loggedUser == "") {
+      System.out.println("\nLogin first to check profiles");  
+    } else {
+      if (!myObj.exists()) {
+        System.out.println("\nPlease Create a profile first!");
+      } else {
+        try {
+          Scanner myReader = new Scanner(myObj);
+          while (myReader.hasNextLine()) {
+            String data    = myReader.nextLine();
+            String[] parts = data.split(",");
+
+            if (parts[0].equals(loggedUser)) {
+              return data;
+            }
+          }
+          myReader.close();
+        } catch (FileNotFoundException e) {
+          System.out.println("An error occurred.");
+          e.printStackTrace();
         }
       }
-      myReader.close();
-    } catch (FileNotFoundException e) {
-      System.out.println("An error occurred.");
-      e.printStackTrace();
+      
+      return "No profile Found! Create One first";
     }
 
     return "";
