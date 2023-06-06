@@ -14,6 +14,7 @@ class Menu {
     "6. Signup to system",
     "7. Create a profile",
     "8. Get Profile",
+    "9. Delete Current Profile",
     "0. To Exit",
   };
 
@@ -65,6 +66,9 @@ class Menu {
       case 8:
         String currentProfile = profileObj.getProfile(this.loggedUser);
         System.out.println("\n"+currentProfile);
+        this.showMenu();
+      case 9:
+        profileObj.deleteProfile(this.loggedUser);
         this.showMenu();
       case 0:
         break;
@@ -274,7 +278,7 @@ class UserClass {
     } else {
 
       Scanner enter = new Scanner(System.in);
-      System.out.print("Enter your username: ");
+      System.out.print("\nEnter your username: ");
       String username = enter.nextLine();
 
       System.out.print("Enter your ID number: ");
@@ -349,6 +353,7 @@ class Profile {
 
             if (parts[0].equals(loggedUser)) {
               System.out.println("\nYou already have a profile in the system!");
+              myReader.close();
               return;
             }
           }
@@ -391,8 +396,8 @@ class Profile {
       try {
         FileWriter myWriter = new FileWriter("profiles.txt", true);
         myWriter.write(profile);
-        myWriter.close();
         System.out.println("\nprofile created successfully\n");
+        myWriter.close();
       } catch (IOException e) {
         System.out.println("An error occurred.");
         e.printStackTrace();
@@ -404,7 +409,7 @@ class Profile {
     File myObj = new File("profiles.txt");
 
     if (loggedUser == null || loggedUser == "") {
-      System.out.println("\nLogin first to check profiles");  
+      System.out.println("Login first to check profiles");
     } else {
       if (!myObj.exists()) {
         System.out.println("\nPlease Create a profile first!");
@@ -416,6 +421,7 @@ class Profile {
             String[] parts = data.split(",");
 
             if (parts[0].equals(loggedUser)) {
+              myReader.close();
               return data;
             }
           }
@@ -430,6 +436,54 @@ class Profile {
     }
 
     return "";
+  }
+
+  static void deleteProfile(String loggedUser) {
+    if (loggedUser == null || loggedUser == "") {
+      System.out.println("\nLogin first to delete profile");  
+    } else {
+
+      File file        = new File("profiles.txt");
+      File tempFile    = new File("tempprofiles.txt");
+
+      try {
+        System.out.println("\nDeleting current profile...\n");
+
+        Scanner fileScan = new Scanner(file);
+
+        FileWriter myWriter = new FileWriter(tempFile.getName(), true);
+
+        boolean deleted = false;
+
+        while(fileScan.hasNextLine()) {
+
+          String line        = fileScan.nextLine();
+          String currentUser = line.split(",")[0];
+
+          if (currentUser.equals(loggedUser)) {
+            System.out.println("\nProfile Deleted Successfully!\n");
+            deleted = true;
+            continue;
+          }
+
+          myWriter.write(line);
+        }
+
+        if(!deleted) {
+          System.out.println("\nProfile not found");
+        }
+
+        myWriter.close();
+        fileScan.close();
+
+        file.delete();
+        tempFile.renameTo(file);
+
+      } catch (IOException e) {
+        System.out.println("An error occurred.");
+        e.printStackTrace();
+      }
+    }
   }
 }
 
